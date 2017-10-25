@@ -1,16 +1,18 @@
-/*! bessonov.ng-t - v0.0.6 - 2016-07-31 *//**
+/*! bessonov.ng-t - v0.0.7 - 2017-10-25 *//**
 * The MIT License (MIT)
-* Copyright (c) 2016-2016 Anton Bessonov
+* Copyright (c) 2016-2017 Anton Bessonov
 */(function(angular) {
 	'use strict';
-	angular.module('bessonov.ng-t', ['ng', 'ngLocale']);
+	angular.module('bessonov.ng-t', ['ng', 'ngLocale', 'ngSanitize']);
 }(angular));
+
 (function(angular) {
 	'use strict';
 
 	angular.module('bessonov.ng-t')
 
-	.directive('t', ['$compile', '$rootScope', 't', function($compile, $rootScope, t) {
+	.directive('t', ['$compile', '$injector', 't', function($compile, $injector, t) {
+		var $sce = $injector.get('$sce');
 		return {
 			restrict: 'AE',
 			scope: {
@@ -24,17 +26,18 @@
 					var translate = function() {
 						var params = scope.tParams || scope.t;
 						t.translate(originalBody, params).then(function(translation) {
-							element.html(translation);
+							element.html($sce.getTrustedHtml(translation) || '');
 							$compile(element.contents())(scope);
 						});
 					};
-					$rootScope.$on('tLanguageChangedSuccessful', translate);
+					scope.$on('tLanguageChangedSuccessful', translate);
 					translate();
 				};
 			}
 		};
 	}]);
 }(angular));
+
 (function(angular) {
 	'use strict';
 
@@ -356,7 +359,7 @@
 				// used as a setter
 				_setUse(lang);
 
-				$rootScope.$emit('tLanguageChangedSuccessful', {language: lang});
+				$rootScope.$broadcast('tLanguageChangedSuccessful', {language: lang});
 
 				return this;
 			};
